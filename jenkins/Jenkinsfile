@@ -1,29 +1,34 @@
+@Library('jenkins-shared-library') _
+
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.0'
-            args '-v /root/.m2:/root/.m2'
-        }
+    agent any
+
+    environment {
+        ECR_REPO_URL = "YOUR_ECR_REPO_URL"
+        HELM_CHART_PATH = "./helm"
+        RELEASE_NAME = "simple-java-app"
+        NAMESPACE = "default"
     }
+
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                checkout scm
             }
         }
-        stage('Test') {
+        stage('Build and Test') {
             steps {
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
+                buildApp()
             }
         }
-        stage('Deliver') {
+        stage('Docker Build and Push') {
             steps {
-                sh './jenkins/scripts/deliver.sh'
+                dockerBuildAndPush(ECR_REPO_URL)
+            }
+        }
+        stage('Deploy to EKS') {
+            steps {
+                deployToEKS(HELM_CHART_PATH, RELEASE_NAME, NAMESPACE)
             }
         }
     }
