@@ -1,0 +1,11 @@
+replicaCount: 2
+
+image:
+  repository: your-repo/your-image
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources: {}
